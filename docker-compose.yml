@@ -1,0 +1,101 @@
+# obsidian-clipper-gateway —— 完整栈
+#
+# 服务总览：
+#   traefik                 反代 + Let's Encrypt（80/443 暴露到公网）
+#   web_clipper             剪藏管道 + Local REST API 兼容层（/api）
+#   fast-note-sync-service  Obsidian vault 后端（存储 + WebSocket 推送 + MCP）
+#
+# 部署前必填：.env 中 DOMAIN / ACME_EMAIL / API_KEY / FNS_TOKEN，
+#             以及 GitHub/OpenAI/Telegram 三组凭据。
+
+networks:
+  edge:
+    name: clipper-edge
+  internal:
+    name: clipper-internal
+    internal: false   # web_clipper 需要外网调 GitHub/OpenAI/Jina
+
+services:
+  # ============================================================
+  # Traefik
+  # ============================================================
+  traefik:
+    image: traefik:v3.1
+    container_name: clipper-traefik
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=clipper-edge
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --certificatesresolvers.le.acme.tlschallenge=true
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --log.level=INFO
+      - --accesslog=true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data/letsencrypt:/letsencrypt
+    networks:
+      - edge
+
+  # ============================================================
+  # web_clipper —— 剪藏入口 + Local REST API 兼容层
+  # ============================================================
+  web_clipper:
+    build: ./app
+    image: ghcr.io/yefeng8771/obsidian-clipper-gateway:latest
+    container_name: clipper-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - FNS_URL=http://fast-note-sync-service:9000
+    networks:
+      - edge
+      - internal
+    depends_on:
+      - fast-note-sync-service
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=clipper-edge
+      # /api/* —— userscript 与浏览器扩展共用入口
+      - traefik.http.routers.clipper.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)
+      - traefik.http.routers.clipper.entrypoints=websecure
+      - traefik.http.routers.clipper.tls.certresolver=le
+      - traefik.http.routers.clipper.middlewares=clipper-strip
+      - traefik.http.middlewares.clipper-strip.stripprefix.prefixes=/api
+      - traefik.http.services.clipper.loadbalancer.server.port=8000
+
+  # ============================================================
+  # fast-note-sync-service —— vault 后端
+  # 与本机 Obsidian 的 fast-note-sync plugin 直接通话
+  # ============================================================
+  fast-note-sync-service:
+    image: haierkeys/fast-note-sync-service:latest
+    container_name: clipper-fns
+    restart: unless-stopped
+    volumes:
+      - ./data/fns/storage:/fast-note-sync/storage
+      - ./data/fns/config:/fast-note-sync/config
+    networks:
+      - edge
+      - internal
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=clipper-edge
+      # 给本机 Obsidian plugin / Cursor / Claude Desktop 用：
+      #   - REST API
+      #   - WebSocket /api/user/sync
+      #   - MCP SSE /api/mcp/sse
+      - traefik.http.routers.fns.rule=Host(`sync.${DOMAIN}`)
+      - traefik.http.routers.fns.entrypoints=websecure
+      - traefik.http.routers.fns.tls.certresolver=le
+      - traefik.http.services.fns.loadbalancer.server.port=9000

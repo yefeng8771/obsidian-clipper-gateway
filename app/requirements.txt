@@ -1,0 +1,22 @@
+# Web 框架
+fastapi==0.104.1
+python-multipart==0.0.6
+uvicorn==0.24.0
+slowapi==0.1.8
+
+# GitHub 快照
+PyGithub==2.1.1
+
+# Telegram
+python-telegram-bot==20.6
+
+# OpenAI（摘要 + 标签）
+openai==1.3.5
+
+# 工具
+watchdog==3.0.0
+requests==2.31.0
+httpx==0.27.2
+python-dotenv==1.0.0
+beautifulsoup4==4.12.2
+html2text==2024.2.26

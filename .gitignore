@@ -1,0 +1,30 @@
+# Secrets
+.env
+.env.local
+*.pem
+*.key
+
+# Local data (Docker volumes / runtime state)
+data/
+uploads/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
