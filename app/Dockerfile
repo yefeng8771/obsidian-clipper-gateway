@@ -25,8 +25,8 @@ COPY . .
 # 创建 uploads 目录
 RUN mkdir -p uploads
 
-# 暴露端口 (默认 65331)
-EXPOSE 65331
+# 暴露端口 (默认 8000，与 docker-compose.yml 一致)
+EXPOSE 8000
 
 # 启动命令
 CMD ["python", "main.py"]
