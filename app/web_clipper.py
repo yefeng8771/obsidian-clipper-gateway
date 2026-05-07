@@ -85,12 +85,17 @@ def verify_file(file: UploadFile):
         )
 
 def _safe_slug(s: str) -> str:
-    """生成文件名安全的 slug：去掉非法字符 + 截断"""
+    """生成文件名安全的 slug：去掉非法字符、中文标点、空格逗号 + 截断"""
     if not s:
         return ""
+    # 1. 去除 Windows / 通用文件系统非法字符
     s = re.sub(r'[<>:"/\\|?*\x00-\x1f]', " ", s)
-    s = re.sub(r"\s+", " ", s).strip()
-    return s[:80]
+    # 2. 去除常见中文标点
+    s = re.sub(r'[\u3000-\u303f\uff00-\uffef]', " ", s)
+    # 3. 将空格、逗号、句号等替换为下划线并压缩
+    s = re.sub(r"[\s,，.。!！?？;；:]+", "_", s).strip("_")
+    # 4. 截断为 60 字符，避免超长文件名
+    return s[:60]
 
 
 def _yaml_str(s) -> str:
@@ -357,6 +362,8 @@ class WebClipperHandler:
                 timeout=30,
             )
             resp.raise_for_status()
+            logger.info(f"FNS 响应状态: {resp.status_code}")
+            logger.info(f"FNS 响应体: {resp.text[:1000]}")
             return f"obsidian://open?vault={self.config['fns_vault']}&file={path}"
         except Exception as e:
             logger.error(f"保存到 fast-note-sync 失败: {str(e)}")
