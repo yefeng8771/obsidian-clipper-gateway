@@ -25,16 +25,11 @@ CONFIG = {
     'openai_max_retries': int(os.getenv('OPENAI_MAX_RETRIES', 3)),
 
     # ---- fast-note-sync (Obsidian vault 后端) ----
-    'fns_url':    os.getenv('FNS_URL', 'http://fast-note-sync-service:9000'),
+    # 优先使用对外域名 FNS_HOST，未设置时回退到内部地址 FNS_URL
+    'fns_url':    os.getenv('FNS_HOST') or os.getenv('FNS_URL', 'http://fast-note-sync-service:9000'),
     'fns_token':  os.getenv('FNS_TOKEN', ''),
     'fns_vault':  os.getenv('FNS_VAULT', 'Inbox'),
     'fns_folder': os.getenv('FNS_FOLDER', 'Clippings'),
-
-    # ---- Local REST API 兼容层（vault_api.py 用） ----
-    # 自动给每条 vault 写入注入 AI 摘要/标签 frontmatter
-    'vault_ai_enrich': os.getenv('VAULT_AI_ENRICH', 'false').lower() == 'true',
-    # 每次 vault 写入都丢一条 Telegram 通知
-    'vault_notify':    os.getenv('VAULT_NOTIFY', 'false').lower() == 'true',
 
     # ---- App ----
     'api_key':                  os.getenv('API_KEY', ''),

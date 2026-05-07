@@ -510,7 +510,7 @@ async def upload_file(
             detail=str(e)
         )
 
-# ---- 挂载 Local REST API 兼容路由（给 userscript 用） ----
+# ---- 挂载 vault_api 路由 ----
 from vault_api import router as vault_router  # noqa: E402
 app.include_router(vault_router)
 

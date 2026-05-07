@@ -1,8 +1,8 @@
 # obsidian-clipper-gateway
 
-> 把所有"网页剪藏"和"Obsidian Local REST API 调用"统一收口到一台 VPS，
+> 把"网页剪藏"统一收口到一台 VPS，
 > 自动 AI 摘要 / 打标签 / 落进 Obsidian vault，
-> 本机不再需要安装 Obsidian Local REST API 插件。
+> 本机通过 fast-note-sync plugin 实时同步。
 
 ---
 
@@ -11,8 +11,7 @@
 一个部署在 VPS 上的剪藏 + 同步网关。它把以下三类输入统一汇入你的 Obsidian vault：
 
 1. **浏览器 Web Clipper 扩展**（基于 SingleFile）—— 一键把网页打包成 HTML 上传
-2. **使用 Obsidian Local REST API 协议的 userscript**（如 [Linux.do 帖子导出脚本](https://greasyfork.org/scripts/561785)）—— `PUT /vault/{path}` 直接写笔记
-3. **AI 客户端**（Cursor / Claude Desktop / Cherry Studio）—— 通过 MCP SSE 读写笔记
+2. **AI 客户端**（Cursor / Claude Desktop / Cherry Studio）—— 通过 MCP SSE 读写笔记
 
 所有路径最终都落到 [fast-note-sync-service](https://github.com/haierkeys/fast-note-sync-service) 管理的 vault，本机 Obsidian 通过 [fast-note-sync plugin](https://github.com/haierkeys/obsidian-fast-note-sync) 实时（毫秒级）拉取更新。
 
@@ -21,29 +20,24 @@
 ## 架构
 
 ```
-                         浏览器扩展                        userscript
-                         (SingleFile)                  (Local REST API)
-                              │                                │
-                  POST /api/upload                  PUT/POST /api/vault/...
-                              │                                │
-                              └──────────┬─────────────────────┘
-                                         ▼
-                                  ┌──────────────┐
+                         浏览器扩展
+                         (SingleFile)
+                              │
+                  POST /api/upload
+                              │
+                              ▼
+                       ┌──────────────┐
                                   │   Traefik    │  TLS / Let's Encrypt
                                   └──────┬───────┘
                                          │
                                   ┌──────▼───────────────────────────┐
                                   │      web_clipper                 │
-                                  │                                  │
                                   │  ① /upload                       │
                                   │     GitHub Pages 快照            │
                                   │     Jina → Markdown              │
                                   │     OpenAI 摘要 + 标签           │
                                   │     → 写入 FNS                   │
                                   │                                  │
-                                  │  ② /vault/{path}                 │
-                                  │     (可选) AI 富化 frontmatter   │
-                                  │     → 透传 FNS                   │
                                   └──────────────┬───────────────────┘
                                                  │ REST
                                                  ▼
@@ -67,8 +61,8 @@
 
 - 一台公网可达的 Linux VPS（≥ 1 GB 内存即可）
 - 一个解析到 VPS 的域名，**两条 A/AAAA 记录**：
-  - `example.com`         → VPS IP
-  - `sync.example.com`    → VPS IP
+  - `example.com` → VPS IP
+  - `sync.example.com` → VPS IP
 - 装好 Docker + Docker Compose
 
 ### 1. 克隆并配置
@@ -134,36 +128,22 @@ curl -H "Authorization: Bearer $KEY" https://$DOMAIN/api/vault/
 
 打开 Obsidian → Settings → Community plugins → Browse → 搜 **Fast Note Sync** → 安装并启用：
 
-| 字段 | 填法 |
-|---|---|
-| Endpoint | `https://sync.example.com` |
-| Token    | 同 `.env` 里的 `FNS_TOKEN` |
+| 字段     | 填法                                    |
+| -------- | --------------------------------------- |
+| Endpoint | `https://sync.example.com`              |
+| Token    | 同 `.env` 里的 `FNS_TOKEN`              |
 | Vault    | `Inbox`（或你 `.env` 里的 `FNS_VAULT`） |
 
 详见 [docs/obsidian-plugin.md](docs/obsidian-plugin.md)。
 
-### 6. userscript 接入（greasyfork/561785 等）
-
-打开油猴脚本管理界面里那个"Linux.do → Obsidian"脚本的设置：
-
-| 字段 | 旧值 | 新值 |
-|---|---|---|
-| API 地址 | `https://127.0.0.1:27124` | **`https://example.com/api`** |
-| API Key | Obsidian 插件里的 Key | **`.env` 里的 `API_KEY`** |
-| 导出目录 | 默认 `Linux.do` | 不变 |
-| 图片目录 | 默认 `Linux.do/attachments` | 不变 |
-| 图片模式 | 推荐"保存图片并引用" | —— |
-
-详见 [docs/userscript-setup.md](docs/userscript-setup.md)。
-
-### 7. 浏览器扩展接入
+### 6. 浏览器扩展接入
 
 如果你之前用过 goxofy 的 [SingleFile + web_clipper](https://github.com/goxofy/web_clipper) 流程，扩展那边只需改 endpoint：
 
-| 字段 | 新值 |
-|---|---|
-| Upload URL | `https://example.com/api/upload/` |
-| Bearer Token | `.env` 里的 `API_KEY` |
+| 字段         | 新值                              |
+| ------------ | --------------------------------- |
+| Upload URL   | `https://example.com/api/upload/` |
+| Bearer Token | `.env` 里的 `API_KEY`             |
 
 详见 [docs/browser-extension.md](docs/browser-extension.md)。
 
@@ -188,7 +168,6 @@ obsidian-clipper-gateway/
 ├── docs/
 │   ├── architecture.md
 │   ├── deploy.md
-│   ├── userscript-setup.md
 │   ├── browser-extension.md
 │   ├── obsidian-plugin.md
 │   ├── dataview-recipes.md
@@ -204,14 +183,13 @@ obsidian-clipper-gateway/
 
 ## 替代了什么 / 没替代什么
 
-| 上游原本的能力 | 本仓库的处理 |
-|---|---|
-| Notion 数据库做"剪藏目录" | **删除**。改用 Obsidian + Dataview 在 frontmatter 上动态生成目录视图（[recipes](docs/dataview-recipes.md)） |
-| GitHub Pages 托管 HTML 快照 | **保留**。剪藏的 HTML 仍然托管在 GitHub Pages，frontmatter 里有 `snapshot:` 字段 |
-| OpenAI 生成摘要 + 标签 | **保留**。落入 frontmatter |
-| Telegram 通知 | **保留**。可选 |
-| Local REST API 兼容（userscript 直接指过来） | **新增**。`/vault/{path}` 全套 PUT/POST/GET/DELETE |
-| 实时同步到本机 Obsidian | **新增**。fast-note-sync 的 WebSocket plugin |
+| 上游原本的能力              | 本仓库的处理                                                                                                |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Notion 数据库做"剪藏目录"   | **删除**。改用 Obsidian + Dataview 在 frontmatter 上动态生成目录视图（[recipes](docs/dataview-recipes.md)） |
+| GitHub Pages 托管 HTML 快照 | **保留**。剪藏的 HTML 仍然托管在 GitHub Pages，frontmatter 里有 `snapshot:` 字段                            |
+| OpenAI 生成摘要 + 标签      | **保留**。落入 frontmatter                                                                                  |
+| Telegram 通知               | **保留**。可选                                                                                              |
+| 实时同步到本机 Obsidian     | **新增**。fast-note-sync 的 WebSocket plugin                                                                |
 
 ---
 
@@ -219,7 +197,6 @@ obsidian-clipper-gateway/
 
 - [架构](docs/architecture.md) —— 数据流 / 时序 / 关键决策
 - [部署](docs/deploy.md) —— VPS 从零到跑通的完整流程
-- [userscript 接入](docs/userscript-setup.md) —— greasyfork/561785 等 Local REST API 客户端
 - [浏览器扩展接入](docs/browser-extension.md) —— SingleFile-based 扩展
 - [本机 Obsidian 配置](docs/obsidian-plugin.md) —— fast-note-sync plugin
 - [Dataview 食谱](docs/dataview-recipes.md) —— 替代 Notion 视图

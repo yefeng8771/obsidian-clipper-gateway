@@ -4,13 +4,13 @@
 
 ## 0. 前置
 
-| 项 | 要求 |
-|---|---|
-| VPS | ≥ 1 GB 内存，≥ 10 GB 磁盘 |
-| OS | 任意 Linux（推荐 Debian 12 / Ubuntu 22.04） |
-| 域名 | 你拥有控制权的一级或二级域名 |
-| DNS | 两条 A 记录（或 AAAA）：`example.com` 和 `sync.example.com` 都指向 VPS IP |
-| 软件 | Docker + Docker Compose plugin |
+| 项   | 要求                                                                      |
+| ---- | ------------------------------------------------------------------------- |
+| VPS  | ≥ 1 GB 内存，≥ 10 GB 磁盘                                                 |
+| OS   | 任意 Linux（推荐 Debian 12 / Ubuntu 22.04）                               |
+| 域名 | 你拥有控制权的一级或二级域名                                              |
+| DNS  | 两条 A 记录（或 AAAA）：`example.com` 和 `sync.example.com` 都指向 VPS IP |
+| 软件 | Docker + Docker Compose plugin                                            |
 
 如果 VPS 没装 Docker：
 
@@ -43,31 +43,29 @@ cd obsidian-clipper-gateway
 
 ### 3.1 必填
 
-| 变量 | 怎么拿 |
-|---|---|
-| `DOMAIN` | 你的域名，例：`example.com` |
+| 变量         | 怎么拿                                   |
+| ------------ | ---------------------------------------- |
+| `DOMAIN`     | 你的域名，例：`example.com`              |
 | `ACME_EMAIL` | 任意你常用的邮箱（Let's Encrypt 通知用） |
-| `API_KEY` | `openssl rand -hex 32`，给客户端鉴权 |
-| `FNS_TOKEN` | 第 5 步在 fast-note-sync 后台生成 |
+| `API_KEY`    | `openssl rand -hex 32`，给客户端鉴权     |
+| `FNS_TOKEN`  | 第 5 步在 fast-note-sync 后台生成        |
 
 ### 3.2 浏览器扩展剪藏要用到
 
-| 变量 | 怎么拿 |
-|---|---|
-| `GITHUB_REPO` | 一个用来托管 HTML 快照的 repo，建议私有 + 启用 Pages |
-| `GITHUB_TOKEN` | 在 https://github.com/settings/tokens 建一个，授权到上面 repo 的 `repo` 权限 |
-| `GITHUB_PAGES_DOMAIN` | repo 的 Pages 域名，例：`https://yourname.github.io/your_clips_repo` |
-| `OPENAI_API_KEY` | OpenAI（或代理）的 API key |
-| `OPENAI_BASE_URL` | 默认 `https://api.openai.com/v1`，用代理就改 |
-| `OPENAI_MODEL` | 推荐 `gpt-4o-mini`，省钱够用 |
+| 变量                  | 怎么拿                                                                       |
+| --------------------- | ---------------------------------------------------------------------------- |
+| `GITHUB_REPO`         | 一个用来托管 HTML 快照的 repo，建议私有 + 启用 Pages                         |
+| `GITHUB_TOKEN`        | 在 https://github.com/settings/tokens 建一个，授权到上面 repo 的 `repo` 权限 |
+| `GITHUB_PAGES_DOMAIN` | repo 的 Pages 域名，例：`https://yourname.github.io/your_clips_repo`         |
+| `OPENAI_API_KEY`      | OpenAI（或代理）的 API key                                                   |
+| `OPENAI_BASE_URL`     | 默认 `https://api.openai.com/v1`，用代理就改                                 |
+| `OPENAI_MODEL`        | 推荐 `gpt-4o-mini`，省钱够用                                                 |
 
 ### 3.3 可选
 
-| 变量 | 用途 |
-|---|---|
+| 变量                                  | 用途 |
+| ------------------------------------- | ---- |
 | `TELEGRAM_TOKEN` / `TELEGRAM_CHAT_ID` | 通知 |
-| `VAULT_AI_ENRICH=true` | 给 userscript 写入的笔记自动加 frontmatter |
-| `VAULT_NOTIFY=true` | 每次 vault 写入都丢一条 Telegram |
 
 复制并填写：
 
@@ -110,19 +108,8 @@ DOMAIN=example.com
 # 6.1 web_clipper 健康检查（vault_api 兼容端点）
 curl -fSsL -H "Authorization: Bearer $KEY" https://$DOMAIN/api/
 
-# 6.2 写一条 markdown
-curl -fSsL -X PUT \
-  -H "Authorization: Bearer $KEY" \
-  -H "Content-Type: text/markdown" \
-  --data $'# Hello\n\n来自 obsidian-clipper-gateway' \
-  https://$DOMAIN/api/vault/Inbox/test.md
-echo "✓ written"
-
-# 6.3 列出 vault 文件
+# 6.2 列出 vault 文件
 curl -fSsL -H "Authorization: Bearer $KEY" https://$DOMAIN/api/vault/
-
-# 6.4 读回来
-curl -fSsL -H "Authorization: Bearer $KEY" https://$DOMAIN/api/vault/Inbox/test.md
 ```
 
 ## 7. 本机 Obsidian 接入
@@ -131,7 +118,6 @@ curl -fSsL -H "Authorization: Bearer $KEY" https://$DOMAIN/api/vault/Inbox/test.
 
 ## 8. 客户端接入
 
-- userscript：[userscript-setup.md](userscript-setup.md)
 - 浏览器扩展：[browser-extension.md](browser-extension.md)
 
 ## 9. 维护

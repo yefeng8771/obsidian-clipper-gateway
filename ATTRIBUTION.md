@@ -14,7 +14,7 @@
   - 在 `web_clipper.py` 末尾挂载 `vault_api` 路由
   - 新增 `_safe_slug` / `_yaml_str` 两个 helper
 - **上游许可证**：**未声明**（截至本仓库创建时间）。
-  在 GitHub 上未声明 LICENSE 的代码，默认是 *All Rights Reserved*。
+  在 GitHub 上未声明 LICENSE 的代码，默认是 _All Rights Reserved_。
   本仓库的衍生使用基于以下两点：
   1. 上游公开发布在 GitHub 上，可视为对查阅与个人评估的默许；
   2. 我们已通过 issue 主动告知上游本派生仓库的存在（见
@@ -25,7 +25,7 @@
 
 - **来源**：本仓库原创
 - **遵循的协议**：[obsidian-local-rest-api](https://github.com/coddingtonbear/obsidian-local-rest-api) 公开的 OpenAPI 规范（MIT 许可）。
-  这里只是按其端点形态实现兼容层，不包含上游 plugin 的代码。
+  这里只保留了健康检查 (`/`) 和文件列表 (`/vault/`) 端点，`/vault/{path}` 读写删端点已移除。
 - **许可证**：MIT（见根目录 LICENSE）
 
 ### 3. `docker-compose.yml` 中的 `fast-note-sync-service` 镜像

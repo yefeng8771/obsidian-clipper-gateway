@@ -13,7 +13,7 @@ networks:
     name: clipper-edge
   internal:
     name: clipper-internal
-    internal: false   # web_clipper 需要外网调 GitHub/OpenAI/Jina
+    internal: false # web_clipper 需要外网调 GitHub/OpenAI/Jina
 
 services:
   # ============================================================
@@ -57,12 +57,10 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=8000
-      - FNS_URL=http://fast-note-sync-service:9000
+      - FNS_HOST=${FNS_HOST}
     networks:
       - edge
       - internal
-    depends_on:
-      - fast-note-sync-service
     labels:
       - traefik.enable=true
       - traefik.docker.network=clipper-edge
