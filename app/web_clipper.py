@@ -350,14 +350,13 @@ class WebClipperHandler:
 
             headers = {"Authorization": f"Bearer {self.config['fns_token']}"}
             base = self.config["fns_url"].rstrip("/")
-            resp = requests.put(
+            resp = requests.post(
                 f"{base}/api/note",
                 headers=headers,
                 json={
                     "vault":     self.config["fns_vault"],
                     "path":      path,
                     "content":   body,
-                    "overwrite": True,
                 },
                 timeout=30,
             )
